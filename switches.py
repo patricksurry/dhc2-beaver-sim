@@ -14,6 +14,8 @@ from serial.tools.list_ports import comports
 
 from switchmap import switchmap
 
+assert switchmap.nbits % 8 == 0, f"{switchmap.nbits} bit switch map not byte aligned"
+
 usbport = next((p.device for p in comports() if p.vid), None)
 
 if not usbport:
@@ -28,12 +30,12 @@ lastdata = b''
 
 while True:
     arduino.write(b'\x01')
-    data = arduino.read(switchmap.nbits/8)
+    data = arduino.read(switchmap.nbits // 8)
     if data == lastdata:
         continue
     lastdata = data
     print(f'Data changed, read {len(data)} bytes {data.hex()}')
-    state = switchmap.readbytes(xs)
+    state = switchmap.readbytes(data)
     print(json.dumps(dict(reversed(state)), indent=4))
     time.sleep(0.1)
 
