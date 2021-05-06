@@ -66,6 +66,16 @@ class InputList(InputBits):
         """note bits should be MSB first throughout"""
         return sum((d.read(bits) for d in self.inputs), [])
 
+    def readbytes(self, xs: bytes, debug=False) -> List[Tuple[str, Any]]:
+        # reverse bytes so we read() from msb to lsb
+        bits = ConstBitStream(bytes(reversed(xs)))
+        assert len(bits) == switchmap.nbits, "Mismatch length from mapping"
+        if debug:
+            s = bits.bin
+            s = ' '.join([s[i:i+8] for i in range(0, len(s), 8)])
+            print(f'Reading bytes {xs.hex()} with {len(bits)} bits: {s}')
+        return self.read(bits)
+
 
 class InputEncoderWithButton(InputList):
     """
@@ -105,28 +115,21 @@ switchmap = InputList(list(reversed([
     InputEncoderWithButton('E'),
 ])))
 
-print(switchmap.nbits)
 
-"""
-read 9 bytes fb01ff00 0000000000
-XX.X XXXX XXXX XXXX X... .... .... .... 0 0 0 0 0
-read 9 bytes fb7f01000000000000
-XX.XXXXXXXXXXXX.X............... 0 0 0 0 0
-read 9 bytes fb3f01000000000000
-XX.XXXXXXXXXXX..X............... 0 0 0 0 0
-"""
+if __name__ == '__main__':
+    import json
 
-def bitsfrombytes(xs: bytes) -> ConstBitStream:
-    # reverse bytes so we read() from msb to lsb
-    return ConstBitStream(bytes(reversed(xs)))
+    """
+    read 9 bytes fb01ff00 0000000000
+    XX.X XXXX XXXX XXXX X... .... .... .... 0 0 0 0 0
+    read 9 bytes fb7f01000000000000
+    XX.XXXXXXXXXXXX.X............... 0 0 0 0 0
+    read 9 bytes fb3f01000000000000
+    XX.XXXXXXXXXXX..X............... 0 0 0 0 0
+    """
 
-
-import json
-
-bits = bitsfrombytes(bytes.fromhex('fbbf0173007f830000'))
-s = bits.bin
-s = ' '.join([s[i:i+8] for i in range(0, len(s), 8)])
-assert len(bits) == switchmap.nbits, "Mismatch length from mapping"
-print(len(bits), s)
-print('XX.X XXXX XXXX XX.X X............... 0 0 0 0 0')
-print(json.dumps(dict(switchmap.read(bits)), indent=4))
+    print(f'Switchmap has {switchmap.nbits} bits')
+    xs = bytes.fromhex('fbbf0173007f830000')
+    state = switchmap.readbytes(xs, debug=True)
+    print('XX.X XXXX XXXX XX.X X............... 0 0 0 0 0')
+    print(json.dumps(dict(state), indent=4))
