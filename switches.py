@@ -27,6 +27,7 @@ else:
 arduino = serial.Serial(port=usbport, baudrate=115200, timeout=1)
 
 lastdata = b''
+oldstate = {}
 
 while True:
     arduino.write(b'\x01')
@@ -35,7 +36,9 @@ while True:
         continue
     lastdata = data
     print(f'Data changed, read {len(data)} bytes {data.hex()}')
-    state = switchmap.readbytes(data)
-    print(json.dumps(dict(reversed(state)), indent=4))
+    state = dict(switchmap.readbytes(data))
+    diff = {k: v for (k, v) in state.items() if k not in oldstate or oldstate[k] != v}
+    oldstate = state
+    print(json.dumps(diff), indent=4)
     time.sleep(0.1)
 
