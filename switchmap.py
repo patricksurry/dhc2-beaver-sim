@@ -108,11 +108,11 @@ switchmap = InputList(list(reversed([
     InputBits('MAGNETO', 'uint:2'),
     InputNPosition('KEY', 6),
     InputUnused(10),
-    InputEncoderWithButton('A'),
-    InputEncoderWithButton('B'),
-    InputEncoderWithButton('C'),
-    InputEncoderWithButton('D'),
-    InputEncoderWithButton('E'),
+    InputEncoderWithButton('VOR'),  # VHF omnidirectional range - bottom right
+    InputEncoderWithButton('ADF'),  # auto direction finder - top right
+    InputEncoderWithButton('ALT'),  # altimeter - top 2nd from right
+    InputEncoderWithButton('AI'),   # attitude indicator - top 2nd from left
+    InputEncoderWithButton('HI'),   # heading indicator - bottom 2nd from left
 ])))
 
 
