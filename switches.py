@@ -39,6 +39,6 @@ while True:
     state = dict(switchmap.readbytes(data))
     diff = {k: v for (k, v) in state.items() if k not in oldstate or oldstate[k] != v}
     oldstate = state
-    print(json.dumps(diff), indent=4)
+    print(json.dumps(diff, indent=4))
     time.sleep(0.1)
 
