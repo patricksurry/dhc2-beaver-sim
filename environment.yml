@@ -1,0 +1,11 @@
+name: beaver-sim
+dependencies:
+  - pip
+  - python=3.6
+  - pip:
+    - pyserial
+    - bitstring
+    - flake8
+    - flake8-black
+    - mypy
+

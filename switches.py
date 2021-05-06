@@ -1,10 +1,7 @@
 """
 
-conda create -n beaver-sim python=3.7
+PIP_EXTRA_INDEX_URL= PIP_INDEX_URL= conda env update -f environment.yml
 conda activate beaver-sim
-
-PIP_EXTRA_INDEX_URL= PIP_INDEX_URL= pip install pyserial
-
 
 ls -l /dev/cu.usb*
 crw-rw-rw-  1 root  wheel   18,   3 24 Apr 10:26 /dev/cu.usbmodem141101
@@ -12,9 +9,13 @@ crw-rw-rw-  1 root  wheel   18,   3 24 Apr 10:26 /dev/cu.usbmodem141101
 """
 import serial
 import time
+
+
 arduino = serial.Serial(port='/dev/cu.usbmodem141101', baudrate=115200, timeout=1)
 
 lastdata = b''
+
+
 
 while True:
     arduino.write(b'\x01')
