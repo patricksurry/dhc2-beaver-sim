@@ -26,6 +26,21 @@ on a regular basis.
 TODO: this will also forward the input actions to FS2020 via python-simconnect.
 
 
+Finding specific panels.
+
+Viewable area, outline area often constrained
+
+Find common sizes (diagonal) via something like https://www.panelook.com/modelsearch.php?op=size
+
+Figure out a size and aspect ratio that suits your needs (e.g. https://en.wikipedia.org/wiki/Display_size)
+
+Either find a used monitor with the right size to disassemble,
+or get a bare LCD panel on ebay, along with a matching controller board.
+
+19" monitor for main instrument panel - LG Flatron E1911TX, jumped power switch with a secondary push button
+
+
+
 Useful links (YMMV)
 ---
 

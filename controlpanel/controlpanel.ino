@@ -165,9 +165,12 @@ void setup() {
 
     Serial.begin(115200);
 
-    // set pullup resistors for switch panel inputs wired to mega pins 22-52
-    for (i=22; i<53; i++) pinMode(i, INPUT_PULLUP);
+    // set pullup resistors for switch panel inputs wired to mega pins 22-53
+    for (i=22; i<54; i++) pinMode(i, INPUT_PULLUP);
 
+    // also set pullup resistors for analog inputs if want relatively constant for unused
+    // for (i=54; i<70; i++) pinMode(i, INPUT_PULLUP);
+    
     // set up the expansion board
     // https://www.waveshare.com/w/upload/8/8e/MCP2307_IO_Expansion_Board_User_Manual_EN.pdf
     mcp.begin(mcpBoardAddress);
@@ -210,8 +213,27 @@ uint32_t getSwitches() {
   // grab current value of all the panel switches, flipping active low => 1
   unsigned long v=0;
   int i;
-  for (i=52; i>=22; i--) v = v*2 + (1-digitalRead(i));
+  for (i=52; i>=22; i--) v = (v << 1) | (1-digitalRead(i));
   return v;
+}
+
+byte analogVals[20];  // 16*10/8 = 20
+
+void readAnalogInputs() {
+  byte* p = analogVals;
+  
+  uint32_t val = 0;
+  int offset = 0;
+  
+  for (int i=0; i<16; i++) {
+    val |= analogRead(i) << offset;
+    offset += 10;
+    while (offset >= 8) {
+      *(p++) = val & 0xff;
+      val >>= 8;
+      offset -= 8;
+    }
+  }
 }
 
 void serialEvent() {
@@ -225,11 +247,16 @@ void serialEvent() {
 
   switch(cmd) {
     case 0x01:
-      // return 4 bytes of switch status, plus one byte per encoder
+      // returns:
+      // 4 bytes of switch status (32 bits)
+      // one byte per encoder (high bit switch with 7 bits signed movement)
+      // 20 bytes of analog input (16 * 10 bits)
       switchState = getSwitches();
       for (int i=0; i<nKnobs; i++) knobState[i] = knobs[i].read();
+      readAnalogInputs();
       Serial.write((byte*)&switchState, sizeof(switchState));
       Serial.write((byte*)&knobState, nKnobs);
+      Serial.write(analogVals, sizeof(analogVals));
       break;
   }
 }

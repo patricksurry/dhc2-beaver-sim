@@ -1,24 +1,39 @@
-from typing import List, Tuple, Any
-from bitstring import ConstBitStream, BitArray
+"""
+Defines the `switchmap` which configures how we map the raw data
+received from the Arduino to the actual physical inputs that
+we want to send to FS
+"""
+from typing import List, Tuple, Any, Optional
+from bitstring import ConstBitStream
+
+
+InputValue = Tuple[str, Any]
 
 
 class InputBits:
-    def __init__(self, name: str=None, fmt: str=None):
+    """
+    Base class for consuming some bits from a stream to produce
+    a list of one or more named valued.
+    Every subclass specifies the number of bits it consumes via `nbits`
+    """
+    def __init__(self, name: str = '', fmt: str = None):
+        """By default provide a name and a bitstring format string"""
         self.name = name
         self.fmt = fmt
         if fmt and ':' in fmt:
-            self.nbits = int(fmt.split(':')[-1])
+            self.nbits: Optional[int] = int(fmt.split(':')[-1])
         elif fmt == 'bool':
             self.nbits = 1
         else:
             self.nbits = None
 
-    def read(self, bits: ConstBitStream) -> List[Tuple[str, Any]]:
+    def read(self, bits: ConstBitStream) -> List[InputValue]:
+        """Consume bits from the stream to return a list of one named value"""
         return [(self.name, bits.read(self.fmt))]
 
 
 class InputBool(InputBits):
-    """Represent a single bit boolean input"""
+    """Represent a single bit boolean input, needing just a name"""
     def __init__(self, name: str):
         super().__init__(name, 'bool')
 
@@ -30,13 +45,12 @@ class InputNPosition(InputBits):
     or 0 if no bit is set.  If multiple bits are set, favor_msb determines
     whether we pick the highest or lowest.
     """
-
-    def __init__(self, name: str, n: int, favor_msb = True):
+    def __init__(self, name: str, n: int, favor_msb=True):
         self.n = n
         self.favor_msb = favor_msb
         super().__init__(name, f'bits:{n}')
 
-    def read(self, bits: ConstBitStream) -> List[Tuple[str, Any]]:
+    def read(self, bits: ConstBitStream) -> List[InputValue]:
         bs = bits.read(self.fmt)
         # Find the index of the first (or last) set bit,
         # returned as a 0-indexed tuple, where 0 indicates MSB
@@ -46,27 +60,32 @@ class InputNPosition(InputBits):
 
 
 class InputUnused(InputBits):
-    """Represent a range of unused bits"""
+    """Consume a range of unused bits, returning no values"""
     def __init__(self, bits):
         super().__init__(None, f'pad:{bits}')
 
-    def read(self, bits: ConstBitStream) -> List[Tuple[str, Any]]:
+    def read(self, bits: ConstBitStream) -> List[InputValue]:
         bits.read(self.fmt)
         return []
 
 
 class InputList(InputBits):
-    """Represent a list of inputs, from MSB towards LSB"""
+    """
+    Represent a sequence of InputBits definitions, from MSB towards LSB.
+    This is used to specify the overall configuration, to consume all the
+    input data via readbytes(), and for nested compound inputs
+    like the InputEncoderWithButton
+    """
     def __init__(self, inputs: List[InputBits]):
         super().__init__()
         self.inputs = inputs
         self.nbits = sum(d.nbits for d in inputs)
 
-    def read(self, bits: ConstBitStream) -> List[Tuple[str, Any]]:
+    def read(self, bits: ConstBitStream) -> List[InputValue]:
         """note bits should be MSB first throughout"""
         return sum((d.read(bits) for d in self.inputs), [])
 
-    def readbytes(self, xs: bytes, debug=False) -> List[Tuple[str, Any]]:
+    def readbytes(self, xs: bytes, debug=False) -> List[InputValue]:
         # reverse bytes so we read() from msb to lsb
         bits = ConstBitStream(bytes(reversed(xs)))
         assert len(bits) == switchmap.nbits, "Mismatch length from mapping"
@@ -79,8 +98,9 @@ class InputList(InputBits):
 
 class InputEncoderWithButton(InputList):
     """
-    Represent a rotary encoder plus a button, encoded in one byte
-    where msb is button status, 7 lsb are a signed rotation
+    Represent a rotary encoder plus a button as a compound input.
+    The value is encoded in one byte
+    where msb is button status, and 7 lsb are a signed change in rotation.
     """
     def __init__(self, name):
         super().__init__([
@@ -90,7 +110,8 @@ class InputEncoderWithButton(InputList):
 
 
 switchmap = InputList(list(reversed([
-    # listed here from LSB first, so include the reverse
+    # listed here from LSB onward, so reversed() gives desired MSB -> LSB order
+    # main switch panel below the flight instruments
     InputBool('MASTER0'),
     InputBool('MASTER1'),
     InputBool('STARTER'),
@@ -108,28 +129,23 @@ switchmap = InputList(list(reversed([
     InputBits('MAGNETO', 'uint:2'),
     InputNPosition('KEY', 6),
     InputUnused(10),
+    # rotary encoders on main flight instrument display
     InputEncoderWithButton('VOR'),  # VHF omnidirectional range - bottom right
     InputEncoderWithButton('ADF'),  # auto direction finder - top right
     InputEncoderWithButton('ALT'),  # altimeter - top 2nd from right
     InputEncoderWithButton('AI'),   # attitude indicator - top 2nd from left
     InputEncoderWithButton('HI'),   # heading indicator - bottom 2nd from left
+    InputBits('WOBBLE', 'uint:10'),  # potentiometer for wobble pump handle
+    InputBits('MIXTURE', 'uint:10'),  # potentiometer for carb mixture
+    InputUnused(14 * 10),
 ])))
 
 
 if __name__ == '__main__':
+    """Simple test that we can read state from bytes similar to Arduino output"""
     import json
 
-    """
-    read 9 bytes fb01ff00 0000000000
-    XX.X XXXX XXXX XXXX X... .... .... .... 0 0 0 0 0
-    read 9 bytes fb7f01000000000000
-    XX.XXXXXXXXXXXX.X............... 0 0 0 0 0
-    read 9 bytes fb3f01000000000000
-    XX.XXXXXXXXXXX..X............... 0 0 0 0 0
-    """
-
     print(f'Switchmap has {switchmap.nbits} bits')
-    xs = bytes.fromhex('fbbf0173007f830000')
+    xs = bytes.fromhex('fbbf0173007f8300003ff3f0' + '00'*17)
     state = switchmap.readbytes(xs, debug=True)
-    print('XX.X XXXX XXXX XX.X X............... 0 0 0 0 0')
     print(json.dumps(dict(state), indent=4))

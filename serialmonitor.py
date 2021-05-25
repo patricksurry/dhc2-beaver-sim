@@ -1,21 +1,24 @@
 """
+Simple serial monitor that pings the Arduino to check current input state.
+Currenly prints state changes, but soon will send via python-simconnect
 
-PIP_EXTRA_INDEX_URL= PIP_INDEX_URL= conda env update -f environment.yml
-conda activate beaver-sim
+To run:
 
-ls -l /dev/cu.usb*
-crw-rw-rw-  1 root  wheel   18,   3 24 Apr 10:26 /dev/cu.usbmodem141101
+    conda env update -f environment.yml
+    conda activate beaver-sim
+    python serialmonitor.py
 
 """
+from typing import Dict, Any
 import time
-import json
 import serial
 from serial.tools.list_ports import comports
 
 from switchmap import switchmap
 
-assert switchmap.nbits % 8 == 0, f"{switchmap.nbits} bit switch map not byte aligned"
 
+# scan attached serial devices for the first one with a USB vendor Id
+# to locate the Arduino.  This could fail with multiple USD devices
 usbport = next((p.device for p in comports() if p.vid), None)
 
 if not usbport:
@@ -27,18 +30,22 @@ else:
 arduino = serial.Serial(port=usbport, baudrate=115200, timeout=1)
 
 lastdata = b''
-oldstate = {}
+oldstate: Dict[str, Any] = {}
 
 while True:
+    # send a "request state" command (the only supported option currently :)
     arduino.write(b'\x01')
+    # expect to receive bytes representing input state
     data = arduino.read(switchmap.nbits // 8)
     if data == lastdata:
         continue
     lastdata = data
-    print(f'Data changed, read {len(data)} bytes {data.hex()}')
+    # if anything changed, parse input state and look for differences
+    # print(f'Data changed, read {len(data)} bytes {data.hex()}')
     state = dict(switchmap.readbytes(data))
     diff = {k: v for (k, v) in state.items() if k not in oldstate or oldstate[k] != v}
     oldstate = state
-    print(json.dumps(diff, indent=4))
+    if diff:
+        print(diff)
+    #TODO send change info to FS
     time.sleep(0.1)
-
