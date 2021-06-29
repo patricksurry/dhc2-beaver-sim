@@ -3,6 +3,9 @@ dependencies:
   - pip
   - python=3.6
   - pip:
+    - fastapi
+    - uvicorn
+    - aiofiles
     - pyserial
     - bitstring
     - flake8
