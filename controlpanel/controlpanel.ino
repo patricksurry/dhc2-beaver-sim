@@ -10,7 +10,7 @@ const unsigned char arduinoInterruptPin = 3, ledPin = 13;
 const unsigned char mcpBoardAddress = 7;
 
 // object representing the expansion board
-Adafruit_MCP23017 mcp;
+Adafruit_MCP2X017 mcp;
 
 // a buffer where we'll mirror mcp data
 uint16_t mcpBits;
@@ -55,11 +55,10 @@ void setup() {
     
     // set up the expansion board
     // https://www.waveshare.com/w/upload/8/8e/MCP2307_IO_Expansion_Board_User_Manual_EN.pdf
-    mcp.begin(mcpBoardAddress);
+    mcp.begin_I2C(mcpBoardAddress);
     mcp.setupInterrupts(true, false, LOW);
     for (i=0; i<16; i++) {
-      mcp.pinMode(i, INPUT);
-      mcp.pullUp(i, HIGH);
+      mcp.pinMode(i, INPUT_PULLUP);
       mcp.setupInterruptPin(i, CHANGE);
     }
     // clear any existing mcp interrupt by reading current state
