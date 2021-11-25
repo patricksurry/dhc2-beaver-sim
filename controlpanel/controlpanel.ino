@@ -10,7 +10,7 @@ const unsigned char arduinoInterruptPin = 3, ledPin = 13;
 const unsigned char mcpBoardAddress = 7;
 
 // object representing the expansion board
-Adafruit_MCP2X017 mcp;
+Adafruit_MCP23X17 mcp;
 
 // a buffer where we'll mirror mcp data
 uint16_t mcpBits;

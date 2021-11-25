@@ -1,4 +1,4 @@
-#include <arduino.h>
+#include <Arduino.h>
 
 //---------- Rotary encoder code adapted from  https://github.com/brianlow/Rotary
 
