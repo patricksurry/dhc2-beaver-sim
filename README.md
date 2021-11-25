@@ -26,7 +26,7 @@ on a regular basis.
 TODO: this will also forward the input actions to FS2020 via python-simconnect.
 
 
-Finding specific panels.
+Finding specific LCD panels.
 
 Viewable area, outline area often constrained
 
