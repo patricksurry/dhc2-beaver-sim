@@ -19,8 +19,6 @@ uint16_t mcpBits;
 // 12V leds are wired to a shift register 
 ShiftRegister74HC595<1> sr(12, 11, 10);
 
-uint8_t ledShiftPins = 0;
-
 unsigned char mcpBitReader(unsigned char bit) {
     // helper function that reads a bit from mcpBits buffer
     return bitRead(mcpBits, bit);
@@ -39,33 +37,6 @@ Rotary knobs[] = {
 };
 const int nKnobs = sizeof(knobs)/sizeof(Rotary);
 
-void setup() {
-    int i;
-
-    pinMode(arduinoInterruptPin, INPUT);
-//    pinMode(ledPin, OUTPUT);  // use the p13 LED as debugging
-
-    Serial.begin(115200);
-
-    // set pullup resistors for switch panel inputs wired to mega pins 22-53
-    for (i=22; i<54; i++) pinMode(i, INPUT_PULLUP);
-
-    // also set pullup resistors for analog inputs if want relatively constant for unused
-    // for (i=54; i<70; i++) pinMode(i, INPUT_PULLUP);
-    
-    // set up the expansion board
-    // https://www.waveshare.com/w/upload/8/8e/MCP2307_IO_Expansion_Board_User_Manual_EN.pdf
-    mcp.begin_I2C(mcpBoardAddress);
-    mcp.setupInterrupts(true, false, LOW);
-    for (i=0; i<16; i++) {
-      mcp.pinMode(i, INPUT_PULLUP);
-      mcp.setupInterruptPin(i, CHANGE);
-    }
-    // clear any existing mcp interrupt by reading current state
-    processEncoders();
-
-    mcpEnableInterrupts();
-}
 
 void mcpEnableInterrupts() {
     mcpInterrupted = false;
@@ -117,17 +88,27 @@ void readAnalogInputs() {
   }
 }
 
+
+void setLEDs(unsigned char bits) {
+  // flip high bits since mofsets are inverted
+  unsigned char actual = bits ^ B11110000;
+
+  sr.setAll(&actual);
+}
+
+
 void serialEvent() {
   // event handler for incoming serial data
   unsigned char cmd;
   uint32_t switchState;
   unsigned char knobState[nKnobs];
+  unsigned char ledState;
 
   // our protocol currently just has one command...
   Serial.readBytes(&cmd, 1);
 
   switch(cmd) {
-    case 0x01:
+    case 0x01:   // Read input state: () => 24 bytes output
       // returns:
       // 4 bytes of switch status (32 bits)
       // one byte per encoder (high bit switch with 7 bits signed movement)
@@ -139,8 +120,44 @@ void serialEvent() {
       Serial.write((byte*)&knobState, nKnobs);
       Serial.write(analogVals, sizeof(analogVals));
       break;
+    case 0x02: // Set output state: 1 byte => () output
+      Serial.readBytes(&ledState, 1);
+      setLEDs(ledState);
+      break;
   }
 }
+
+
+void setup() {
+    int i;
+
+    pinMode(arduinoInterruptPin, INPUT);
+//    pinMode(ledPin, OUTPUT);  // use the p13 LED as debugging
+
+    Serial.begin(115200);
+
+    setLEDs(0);
+
+    // set pullup resistors for switch panel inputs wired to mega pins 22-53
+    for (i=22; i<54; i++) pinMode(i, INPUT_PULLUP);
+
+    // also set pullup resistors for analog inputs if want relatively constant for unused
+    // for (i=54; i<70; i++) pinMode(i, INPUT_PULLUP);
+
+    // set up the expansion board
+    // https://www.waveshare.com/w/upload/8/8e/MCP2307_IO_Expansion_Board_User_Manual_EN.pdf
+    mcp.begin_I2C(mcpBoardAddress);
+    mcp.setupInterrupts(true, false, LOW);
+    for (i=0; i<16; i++) {
+      mcp.pinMode(i, INPUT_PULLUP);
+      mcp.setupInterruptPin(i, CHANGE);
+    }
+    // clear any existing mcp interrupt by reading current state
+    processEncoders();
+
+    mcpEnableInterrupts();
+}
+
 
 void loop() {
   // all we do here is check whether an interrupt fired for encoders,
@@ -151,10 +168,4 @@ void loop() {
     processEncoders();
     mcpEnableInterrupts();
   }
-  ledShiftPins = B10101010;
-  sr.setAll(&ledShiftPins);
-  delay(500);
-  ledShiftPins = B01010101;
-  sr.setAll(&ledShiftPins);
-  delay(500);
 }

@@ -36,9 +36,8 @@ Install libs:
 Compile:
 
     cd controlpanel
-    arduino-cli compile -b arduino:avr:mega controlpanel.ino
-
+    arduino-cli compile -b arduino:avr:mega --export-binaries controlpanel.ino
 
 Upload:
 
-    arduino-cli upload -p <port> --fqbn <fqbn> <sketch>
+    arduino-cli upload -p /dev/ttyACM0 -b arduino:avr:mega controlpanel.ino

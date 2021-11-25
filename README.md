@@ -26,6 +26,27 @@ on a regular basis.
 TODO: this will also forward the input actions to FS2020 via python-simconnect.
 
 
+
+
+Install miniconda on the PI:
+
+https://stackoverflow.com/questions/39371772/how-to-install-anaconda-on-raspberry-pi-3-model-b
+
+    wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-armv7l.sh
+    md5sum Miniconda3-latest-Linux-armv7l.sh
+    /bin/bash Miniconda3-latest-Linux-armv7l.sh
+    rm Miniconda3-latest-Linux-armv7l.sh
+
+Set up the conda environment for the serial monitor:
+
+    conda config --add channels rpi
+
+    conda env update -f environment.yml
+
+    source activate beaver-sim
+
+
+
 Finding specific LCD panels.
 
 Viewable area, outline area often constrained
