@@ -1,5 +1,5 @@
 #include <ShiftRegister74HC595.h>
-#include <Adafruit_MCP23017.h>
+#include <Adafruit_MCP23X17.h>
 
 #include "rotary.h"
 
