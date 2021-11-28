@@ -14,7 +14,7 @@ import time
 import serial
 from serial.tools.list_ports import comports
 
-from switchmap import switchmap
+from switchmap import switchmap, ledSetting
 
 
 # scan attached serial devices for the first one with a USB vendor Id
@@ -32,6 +32,11 @@ arduino = serial.Serial(port=usbport, baudrate=115200, timeout=1)
 lastdata = b''
 oldstate: Dict[str, Any] = {}
 
+oldleds = b''
+
+# turn off all the lights
+arduino.write(b'\x0200')
+
 while True:
     # send a "request state" command (the only supported option currently :)
     arduino.write(b'\x01')
@@ -47,5 +52,8 @@ while True:
     oldstate = state
     if diff:
         print(diff)
+        leds = ledSetting(state)
+        if leds != oldleds:
+            arduino.write(b'\x02' + leds)
     #TODO send change info to FS
     time.sleep(0.1)

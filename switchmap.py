@@ -3,7 +3,7 @@ Defines the `switchmap` which configures how we map the raw data
 received from the Arduino to the actual physical inputs that
 we want to send to FS
 """
-from typing import List, Tuple, Any, Optional
+from typing import List, Tuple, Dict, Any, Optional
 from bitstring import ConstBitStream
 
 
@@ -128,7 +128,8 @@ switchmap = InputList(list(reversed([
     InputBool('SW3-3'),
     InputBits('MAGNETO', 'uint:2'),
     InputNPosition('KEY', 6),
-    InputUnused(10),
+    InputBool('PRIMER'),
+    InputUnused(9),
     # rotary encoders on main flight instrument display
     InputEncoderWithButton('VOR'),  # VHF omnidirectional range - bottom right
     InputEncoderWithButton('ADF'),  # auto direction finder - top right
@@ -140,6 +141,26 @@ switchmap = InputList(list(reversed([
     InputUnused(14 * 10),
 ])))
 
+# 8-bit 12V LED controller via SPIO
+
+ledMap = [
+    'FUEL_WARNING',     #TODO map from simulator
+    'OIL_WARNING',
+    None,
+    None,
+    'SW3-1',  # Front cabin
+    'SW3-2',  # Rear cabin
+    None,
+    None
+]
+assert len(ledMap) == 8
+
+
+def ledSetting(state: Dict[Optional[str], Any]) -> bytes:
+    return sum(
+        1 << i for i, k in enumerate(ledMap) if state.get(k)
+    ).to_bytes(1, byteorder='little')
+
 
 if __name__ == '__main__':
     """Simple test that we can read state from bytes similar to Arduino output"""
@@ -147,5 +168,7 @@ if __name__ == '__main__':
 
     print(f'Switchmap has {switchmap.nbits} bits')
     xs = bytes.fromhex('fbbf0173007f8300003ff3f0' + '00'*17)
-    state = switchmap.readbytes(xs, debug=True)
-    print(json.dumps(dict(state), indent=4))
+    state = dict(switchmap.readbytes(xs, debug=True))
+    print(json.dumps(state, indent=4))
+
+    print('LED setting:', ConstBitStream(ledSetting(state)).bin)
