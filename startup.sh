@@ -5,10 +5,11 @@ xset s off     # disable screen saver
 xset s noblank # don't blank the video device
 unclutter &    # hide X mouse cursor unless mouse activated
 
-source activate beaver-sim
+source /home/pi/miniconda3/bin/activate beaver-sim
 
 # begin monitoring arduino
-python serialmonitor.py 2>&1 > serialmonitor.log &
+cd /home/pi/dhc2-beaver-sim
+stdbuf -oL -eL python serialmonitor.py 2>&1 > serialmonitor.log &
 
 # See https://www.linuxuprising.com/2021/04/how-to-enable-hardware-acceleration-in.html
 # note display is always 0, window position gives offset between screens
