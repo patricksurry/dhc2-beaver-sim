@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 export DISPLAY=:0
 xset -dpms     # disable DPMS (Energy Star) features.
 xset s off     # disable screen saver
@@ -9,7 +9,7 @@ source /home/pi/miniconda3/bin/activate beaver-sim
 
 # begin monitoring arduino
 cd /home/pi/dhc2-beaver-sim
-stdbuf -oL -eL python serialmonitor.py 2>&1 > serialmonitor.log &
+python -u serialmonitor.py 2>&1 > serialmonitor.log &
 
 # See https://www.linuxuprising.com/2021/04/how-to-enable-hardware-acceleration-in.html
 # note display is always 0, window position gives offset between screens
