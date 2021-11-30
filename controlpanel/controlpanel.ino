@@ -69,9 +69,12 @@ uint32_t getSwitches() {
   return v;
 }
 
-byte analogVals[20];  // 16*10/8 = 20
+// each of 16 analog value is read as a 10-bit value, for 16*10/8 = 20 bytes
+// https://www.arduino.cc/reference/en/language/functions/analog-io/analogread/
+byte analogVals[20];
 
 void readAnalogInputs() {
+  // concat 16 x 10-bit values into the output buffer
   byte* p = analogVals;
   
   uint32_t val = 0;

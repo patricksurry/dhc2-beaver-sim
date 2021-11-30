@@ -43,7 +43,123 @@ Set up the conda environment for the serial monitor:
 
     conda env update -f environment.yml
 
-    source activate beaver-sim
+
+Tool to disable mouse pointer unless moving
+
+    sudo apt-get install unclutter
+
+
+
+
+
+https://raspberrypi.stackexchange.com/questions/111642/raspberry-pi-4-framerate-drop-with-video-on-chromium-browser
+
+
+
+raspi-config => enable "Wait for network at boot"
+
+
+# See https://www.linuxuprising.com/2021/04/how-to-enable-hardware-acceleration-in.html
+# note display is always 0, window position gives offset between screens
+# user-data-dir forces second profile to get second window
+CHROMIUM_OPTS=--display=:0 --kiosk --start-fullscreen --incognito --noerrdialogs --no-first-run --disable-translate --disable-features=TranslateUI,TouchpadOverscrollHistoryNavigation --disable-pinch --ignore-gpu-blocklist --enable-accelerated-video-decode --enable-gpu-rasterization
+
+# start main nav instruments
+chromium-browser $CHROMIUM_OPTS --window-position=0,0 --user-data-dir=/home/pi/chromium-profiles/screen0 http://192.168.2.136:8000/panels/dhc2-nav.html 2>&1 > /home/pi/screen0.log &
+
+# start center instrument panel
+chromium-browser $CHROMIUM_OPTS --window-position=1024,0 --user-data-dir=/home/pi/chromium-profiles/screen1 http://192.168.2.136:8000/panels/dhc2-center.html 2>&1 > /home/pi/screen1.log &
+
+
+
+
+Create ~/.config/lxsession/LXDE-pi/autostart containing:
+
+    /home/pi/dhc2-beaver-sim/startup.sh
+
+
+On restart, logs are found in:
+
+     ~/.cache/lxsession/LXDE-pi/run.log
+
+
+
+https://reelyactive.github.io/diy/pi-kiosk/
+
+
+
+setup rpi screens (via gui display configuration or cli):
+
+
+$ tvservice -l
+2 attached device(s), display ID's are :
+Display Number 2, type HDMI 0
+Display Number 7, type HDMI 1
+
+$ tvservice -s -v 2
+state 0x6 [DVI CUSTOM RGB full 4:3], 1024x768 @ 75.00Hz, progressive
+
+$ tvservice -m DMT -v 2
+Group DMT has 6 modes:
+           mode 4: 640x480 @ 60Hz 4:3, clock:25MHz progressive
+           mode 6: 640x480 @ 75Hz 4:3, clock:31MHz progressive
+           mode 9: 800x600 @ 60Hz 4:3, clock:40MHz progressive
+           mode 11: 800x600 @ 75Hz 4:3, clock:49MHz progressive
+  (prefer) mode 16: 1024x768 @ 60Hz 4:3, clock:65MHz progressive
+           mode 18: 1024x768 @ 75Hz 4:3, clock:78MHz progressive
+
+$ tvservice -s -v 7
+state 0xa [HDMI CUSTOM RGB full 4:3], 1024x768 @ 75.00Hz, progressive
+
+$ tvservice -m DMT -v 7
+Group DMT has 11 modes:
+           mode 4: 640x480 @ 60Hz 4:3, clock:25MHz progressive
+           mode 5: 640x480 @ 72Hz 4:3, clock:31MHz progressive
+           mode 6: 640x480 @ 75Hz 4:3, clock:31MHz progressive
+           mode 8: 800x600 @ 56Hz 4:3, clock:36MHz progressive
+           mode 9: 800x600 @ 60Hz 4:3, clock:40MHz progressive
+           mode 10: 800x600 @ 72Hz 4:3, clock:50MHz progressive
+           mode 11: 800x600 @ 75Hz 4:3, clock:49MHz progressive
+           mode 16: 1024x768 @ 60Hz 4:3, clock:65MHz progressive
+           mode 17: 1024x768 @ 70Hz 4:3, clock:75MHz progressive
+           mode 18: 1024x768 @ 75Hz 4:3, clock:78MHz progressive
+           mode 85: 1280x720 @ 60Hz 16:9, clock:74MHz progressive
+
+
+g3py> uvicorn metrics:app --reload --host 0.0.0.0
+
+rpi4> DISPLAY=:0 chromium-browser --new-window --window-position=0,0 --kiosk --app=http://192.168.2.136:8000/panels/dhc2-nav.html
+
+DISPLAY=:0 chromium-browser --kiosk --app=http://192.168.2.136:8000/panels/dhc2-nav.html
+
+rpi4> DISPLAY=:0 chromium-browser --new-window --window-position=1024,0 --kiosk --app=http://192.168.2.136:8000/panels/dhc2-center.html
+
+
+
+
+--user-data-dir="/home/pi/Documents/Profiles/0"
+
+
+https://peter.sh/experiments/chromium-command-line-switches/
+
+maybe?
+
+
+chromium-browser --start-fullscreen --kiosk --incognito --noerrdialogs  --no-first-run --kiosk --disable-translate --disable-features=TranslateUI,TouchpadOverscrollHistoryNavigation  --disable-pinch 'http://localhost:9999'
+
+
+
+chromium-browser --start-fullscreen --kiosk --incognito --noerrdialogs --disable-translate --no-first-run --fast --fast-start --disable-infobars --disable-features=TranslateUI --disk-cache-dir=/dev/null  --password-store=basic --disable-pinch --overscroll-history-navigation=disabled --disable-features=TouchpadOverscrollHistoryNavigation 'http://localhost:9999'
+
+
+
+
+@chromium-browser --new-window --user-data-dir=/tmp/browser-1 --window-position="0,0" --start-fullscreen --kiosk --autoplay-policy=no-user-gesture-required --incognito --noerrdialogs --disable-translate --no-first-run --fast --fast-start --disable-infobars --disable-features=TranslateUI --disk-cache-dir=/dev/null http://google.com &
+
+@chromium-browser --new-window --user-data-dir=/tmp/browser-2 --window-position="1920,0" --start-fullscreen --kiosk --autoplay-policy=no-user-gesture-required --incognito --noerrdialogs --disable-translate --no-first-run --fast --fast-start --disable-infobars --disable-features=TranslateUI --disk-cache-dir=/dev/null http://bing.com
+
+
+
 
 
 
