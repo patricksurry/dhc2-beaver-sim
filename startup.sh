@@ -22,8 +22,10 @@ CHROMIUM_OPTS="--display=:0 --kiosk --start-fullscreen --incognito --noerrdialog
 # --enable-gpu-rasterization - cause screen artifacts
 # --enable-accelerated-video-decode - not needed?
 
+G3PY_HOST=http://simba.local:8000
+
 # start main nav instruments
-chromium-browser $CHROMIUM_OPTS --window-position=0,0 --user-data-dir=/home/pi/chromium-profiles/screen0 http://192.168.2.136:8000/panels/dhc2-nav.html 2>&1 > /home/pi/screen0.log &
+chromium-browser $CHROMIUM_OPTS --window-position=0,0 --user-data-dir=/home/pi/chromium-profiles/screen0 $G3PY_HOST/panels/dhc2-nav.html 2>&1 > /home/pi/screen0.log &
 
 # start center instrument panel
-chromium-browser $CHROMIUM_OPTS --window-position=1024,0 --user-data-dir=/home/pi/chromium-profiles/screen1 http://192.168.2.136:8000/panels/dhc2-center.html 2>&1 > /home/pi/screen1.log &
+chromium-browser $CHROMIUM_OPTS --window-position=1024,0 --user-data-dir=/home/pi/chromium-profiles/screen1 $G3PY_HOST/panels/dhc2-center.html 2>&1 > /home/pi/screen1.log &
