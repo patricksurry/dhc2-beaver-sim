@@ -5,11 +5,13 @@ xset s off     # disable screen saver
 xset s noblank # don't blank the video device
 unclutter &    # hide X mouse cursor unless mouse activated
 
+G3PY_HOST=http://simba.local:8000
+
 source /home/pi/miniconda3/bin/activate beaver-sim
 
 # begin monitoring arduino
 cd /home/pi/dhc2-beaver-sim
-python -u serialmonitor.py 2>&1 > serialmonitor.log &
+python -u monitor.py $G3PY_HOST 2>&1 > monitor.log &
 
 # See https://www.linuxuprising.com/2021/04/how-to-enable-hardware-acceleration-in.html
 # and https://peter.sh/experiments/chromium-command-line-switches/
@@ -24,7 +26,7 @@ python -u serialmonitor.py 2>&1 > serialmonitor.log &
 CHROMIUM_OPTS="--display=:0 --kiosk --start-fullscreen --incognito --noerrdialogs --no-first-run --disable-translate --disable-features=TranslateUI,TouchpadOverscrollHistoryNavigation --disable-pinch --ignore-gpu-blacklist"
 
 # start main nav instruments
-chromium-browser $CHROMIUM_OPTS --window-position=0,0 --user-data-dir=/home/pi/chromium-profiles/screen0 http://192.168.2.136:8000/panels/dhc2-nav.html 2>&1 > /home/pi/screen0.log &
+chromium-browser $CHROMIUM_OPTS --window-position=0,0 --user-data-dir=/home/pi/chromium-profiles/screen0 $G3PY_HOST/panels/dhc2-nav.html 2>&1 > /home/pi/screen0.log &
 
 # start center instrument panel
-chromium-browser $CHROMIUM_OPTS --window-position=1024,0 --user-data-dir=/home/pi/chromium-profiles/screen1 http://192.168.2.136:8000/panels/dhc2-center.html 2>&1 > /home/pi/screen1.log &
+chromium-browser $CHROMIUM_OPTS --window-position=1024,0 --user-data-dir=/home/pi/chromium-profiles/screen1 $G3PY_HOST/panels/dhc2-center.html 2>&1 > /home/pi/screen1.log &
