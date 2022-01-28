@@ -11,13 +11,14 @@ class Arduino(serial.Serial):
         # to locate the Arduino.  This could fail with multiple USD devices
         self.in_bytes = (inputMap.nbits + 7) // 8
         self.out_bytes = (len(outputMap) + 7) // 8
+        print("in/out bytes", self.in_bytes, self.out_bytes)
         self.out_mask = (1 << (self.out_bytes * 8)) - 1
         self.state = ChangeDict(comparators=inputComparators)
         self.output_state = ChangeDict()
         usbport = next((p.device for p in comports() if p.vid), None)
         assert usbport, "Couldn't find usbport, is arduino connected?"
         print(f"Using usb port @ {usbport}")
-        super().init(port=usbport, baudrate=115200, timeout=1)
+        super().__init__(port=usbport, baudrate=115200, timeout=1)
 
     def get(self):
         # send a "request state" command
@@ -40,5 +41,6 @@ class Arduino(serial.Serial):
             return
 
         v = (outputValue(self.output_state) & self.out_mask)
+        print('writing output state', v)
         self.write(b'\x02')
         self.write(v.to_bytes(self.out_bytes, byteorder='little'))

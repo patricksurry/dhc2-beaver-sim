@@ -6,6 +6,7 @@ dependencies:
     - fastapi
     - uvicorn
     - aiofiles
+    - requests
     - pyserial
     - bitstring
     - flake8

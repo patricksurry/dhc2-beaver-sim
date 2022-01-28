@@ -13,7 +13,7 @@ import sys
 import time
 import requests
 from arduino import Arduino
-from arduino_mock import ArduinoMock
+#from arduino_mock import ArduinoMock
 
 assert len(sys.argv) <= 2
 
@@ -21,13 +21,18 @@ host = sys.argv[1] if len(sys.argv) == 2 else None
 
 latest = 0
 
-# panel = Arduino()
-panel = ArduinoMock()
+panel = Arduino()
+# panel = ArduinoMock()
 
 # test all the lights then leave them off
-panel.setTest(True)
-time.sleep(0.5)
-panel.setTest(False)
+time.sleep(0.1)
+print('Testing outputs...')
+#panel.setTest(True)
+panel.write(b'\x02ff')
+time.sleep(3)
+print('Starting panel...')
+#panel.setTest(False)
+panel.write(b'\x0200')
 
 query_params = dict(metrics=','.join(panel.outputs()), latest=0)
 
