@@ -21,11 +21,11 @@ class InputBits:
         self.name = name
         self.fmt = fmt
         if fmt and ':' in fmt:
-            self.nbits: Optional[int] = int(fmt.split(':')[-1])
+            self.nbits = int(fmt.split(':')[-1])
         elif fmt == 'bool':
             self.nbits = 1
         else:
-            self.nbits = None
+            raise NotImplementedError(f"Didn't specify nbits, got name={name}, fmt={fmt}")
 
     def read(self, bits: ConstBitStream) -> List[InputValue]:
         """Consume bits from the stream to return a list of one named value"""
@@ -73,22 +73,22 @@ class InputList(InputBits):
     """
     Represent a sequence of InputBits definitions, from MSB towards LSB.
     This is used to specify the overall configuration, to consume all the
-    input data via readbytes(), and for nested compound inputs
+    input data via from_bytes(), and for nested compound inputs
     like the InputEncoderWithButton
     """
     def __init__(self, inputs: List[InputBits]):
-        super().__init__()
         self.inputs = inputs
-        self.nbits = sum(d.nbits for d in inputs)
+        nbits = sum(d.nbits for d in inputs)
+        super().__init__(fmt=f':{nbits}')
 
     def read(self, bits: ConstBitStream) -> List[InputValue]:
         """note bits should be MSB first throughout"""
         return sum((d.read(bits) for d in self.inputs), [])
 
-    def readbytes(self, xs: bytes, debug=False) -> List[InputValue]:
+    def from_bytes(self, xs: bytes, debug=False) -> List[InputValue]:
         # reverse bytes so we read() from msb to lsb
         bits = ConstBitStream(bytes(reversed(xs)))
-        assert len(bits) == switchmap.nbits, "Mismatch length from mapping"
+        assert len(bits) == self.nbits, "Mismatch length from mapping"
         if debug:
             s = bits.bin
             s = ' '.join([s[i:i+8] for i in range(0, len(s), 8)])
@@ -109,7 +109,7 @@ class InputEncoderWithButton(InputList):
         ])
 
 
-switchmap = InputList(list(reversed([
+inputMap = InputList(list(reversed([
     # listed here from LSB onward, so reversed() gives desired MSB -> LSB order
     # main switch panel below the flight instruments
     InputBool('MASTER0'),
@@ -141,9 +141,19 @@ switchmap = InputList(list(reversed([
     InputUnused(14 * 10),
 ])))
 
-# 8-bit 12V LED controller via SPIO
 
-ledMap = [
+def lofi(delta=8):
+    return lambda a, b: abs(a-b) < delta
+
+
+inputComparators = {
+    'WOBBLE': lofi(),
+    'MIXTURE': lofi(),
+}
+
+
+# 8-bit 12V LED controller via SPIO
+outputMap = [
     'FUEL_WARNING',     #TODO map from simulator
     'OIL_WARNING',
     None,
@@ -153,22 +163,21 @@ ledMap = [
     None,
     None
 ]
-assert len(ledMap) == 8
 
 
-def ledSetting(state: Dict[Optional[str], Any]) -> bytes:
+def outputValue(state: Dict[Optional[str], Any]) -> int:
     return sum(
-        1 << i for i, k in enumerate(ledMap) if state.get(k)
-    ).to_bytes(1, byteorder='little')
+        1 << i for i, k in enumerate(outputMap) if state.get(k)
+    )
 
 
 if __name__ == '__main__':
     """Simple test that we can read state from bytes similar to Arduino output"""
     import json
 
-    print(f'Switchmap has {switchmap.nbits} bits')
+    print(f'Switchmap has {inputMap.nbits} bits')
     xs = bytes.fromhex('fbbf0173007f8300003ff3f0' + '00'*17)
-    state = dict(switchmap.readbytes(xs, debug=True))
+    state = dict(inputMap.from_bytes(xs, debug=True))
     print(json.dumps(state, indent=4))
 
-    print('LED setting:', ConstBitStream(ledSetting(state)).bin)
+    print('LED setting:', ConstBitStream(int=outputValue(state), length=8).bin)

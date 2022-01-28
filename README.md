@@ -140,23 +140,9 @@ rpi4> DISPLAY=:0 chromium-browser --new-window --window-position=1024,0 --kiosk 
 --user-data-dir="/home/pi/Documents/Profiles/0"
 
 
-https://peter.sh/experiments/chromium-command-line-switches/
-
-maybe?
-
-
-chromium-browser --start-fullscreen --kiosk --incognito --noerrdialogs  --no-first-run --kiosk --disable-translate --disable-features=TranslateUI,TouchpadOverscrollHistoryNavigation  --disable-pinch 'http://localhost:9999'
 
 
 
-chromium-browser --start-fullscreen --kiosk --incognito --noerrdialogs --disable-translate --no-first-run --fast --fast-start --disable-infobars --disable-features=TranslateUI --disk-cache-dir=/dev/null  --password-store=basic --disable-pinch --overscroll-history-navigation=disabled --disable-features=TouchpadOverscrollHistoryNavigation 'http://localhost:9999'
-
-
-
-
-@chromium-browser --new-window --user-data-dir=/tmp/browser-1 --window-position="0,0" --start-fullscreen --kiosk --autoplay-policy=no-user-gesture-required --incognito --noerrdialogs --disable-translate --no-first-run --fast --fast-start --disable-infobars --disable-features=TranslateUI --disk-cache-dir=/dev/null http://google.com &
-
-@chromium-browser --new-window --user-data-dir=/tmp/browser-2 --window-position="1920,0" --start-fullscreen --kiosk --autoplay-policy=no-user-gesture-required --incognito --noerrdialogs --disable-translate --no-first-run --fast --fast-start --disable-infobars --disable-features=TranslateUI --disk-cache-dir=/dev/null http://bing.com
 
 
 
@@ -176,6 +162,8 @@ or get a bare LCD panel on ebay, along with a matching controller board.
 
 19" monitor for main instrument panel - LG Flatron E1911TX, jumped power switch with a secondary push button
 
+
+center panel:  LP156WH4-TLP2  + controller https://www.ebay.ca/itm/163835481523
 
 
 Useful links (YMMV)
