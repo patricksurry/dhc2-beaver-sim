@@ -13,7 +13,7 @@ import sys
 import time
 import requests
 from arduino import Arduino
-#from arduino_mock import ArduinoMock
+# from arduino_mock import ArduinoMock as Arduino
 
 assert len(sys.argv) <= 2
 
@@ -25,19 +25,16 @@ panel = Arduino()
 # panel = ArduinoMock()
 
 # test all the lights then leave them off
-time.sleep(0.1)
 print('Testing outputs...')
-#panel.setTest(True)
-panel.write(b'\x02ff')
-time.sleep(3)
-print('Starting panel...')
-#panel.setTest(False)
-panel.write(b'\x0200')
+panel.set_test(True)
+time.sleep(1)
+panel.set_test(False)
+print('Monitoring panel...')
 
-query_params = dict(metrics=','.join(panel.outputs()), latest=0)
+query_params = dict(metrics=','.join(panel.output_names()), latest=0)
 
 while True:
-    state = panel.get()
+    state = panel.get_state()
     diff = state.changedsince(latest)
     latest = state.latest()
     if diff:
@@ -45,7 +42,7 @@ while True:
         if host:
             requests.post(host + '/inputs', json=diff)
 
-    print('requesting outputs', query_params)
+    # print('requesting outputs', query_params)
     if host:
         result = requests.get(
             host + '/metrics.json', params=query_params
@@ -53,6 +50,9 @@ while True:
         query_params['latest'] = result['latest']
         if result['metrics']:
             print('got outputs', result)
-            panel.set(result['metrics'])
+            panel.set_state(result['metrics'])
+    else:
+        if diff:
+            panel.set_state(diff)
 
     time.sleep(0.25)

@@ -28,9 +28,7 @@ TODO: this will also forward the input actions to FS2020 via python-simconnect.
 
 
 
-Install miniconda on the PI:
-
-https://stackoverflow.com/questions/39371772/how-to-install-anaconda-on-raspberry-pi-3-model-b
+Install miniconda on the PI, e.g. [this question](https://stackoverflow.com/questions/39371772/how-to-install-anaconda-on-raspberry-pi-3-model-b)
 
     wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-armv7l.sh
     md5sum Miniconda3-latest-Linux-armv7l.sh
@@ -48,104 +46,69 @@ Tool to disable mouse pointer unless moving
 
     sudo apt-get install unclutter
 
+Wait for the network before launching startup script:
 
+    sudo raspi-config # System -> Network -> Wait for network at boot
 
-
-
-https://raspberrypi.stackexchange.com/questions/111642/raspberry-pi-4-framerate-drop-with-video-on-chromium-browser
-
-
-
-raspi-config => enable "Wait for network at boot"
-
-
-# See https://www.linuxuprising.com/2021/04/how-to-enable-hardware-acceleration-in.html
-# note display is always 0, window position gives offset between screens
-# user-data-dir forces second profile to get second window
-CHROMIUM_OPTS=--display=:0 --kiosk --start-fullscreen --incognito --noerrdialogs --no-first-run --disable-translate --disable-features=TranslateUI,TouchpadOverscrollHistoryNavigation --disable-pinch --ignore-gpu-blocklist --enable-accelerated-video-decode --enable-gpu-rasterization
-
-# start main nav instruments
-chromium-browser $CHROMIUM_OPTS --window-position=0,0 --user-data-dir=/home/pi/chromium-profiles/screen0 http://192.168.2.136:8000/panels/dhc2-nav.html 2>&1 > /home/pi/screen0.log &
-
-# start center instrument panel
-chromium-browser $CHROMIUM_OPTS --window-position=1024,0 --user-data-dir=/home/pi/chromium-profiles/screen1 http://192.168.2.136:8000/panels/dhc2-center.html 2>&1 > /home/pi/screen1.log &
-
-
-
-
-Create ~/.config/lxsession/LXDE-pi/autostart containing:
+Create `~/.config/lxsession/LXDE-pi/autostart` to start the browser and
+arduino monitoring at startup, it should contain just:
 
     /home/pi/dhc2-beaver-sim/startup.sh
 
-
-On restart, logs are found in:
+On restart, logs will be found in:
 
      ~/.cache/lxsession/LXDE-pi/run.log
 
 
 
-https://reelyactive.github.io/diy/pi-kiosk/
+Some tweaking might be necessary for the browser settings, for example
+[improved framerate](https://raspberrypi.stackexchange.com/questions/111642/raspberry-pi-4-framerate-drop-with-video-on-chromium-browser);
+[enable hardware acceleration](https://www.linuxuprising.com/2021/04/how-to-enable-hardware-acceleration-in.html);
+[notes on kiosk setup](https://reelyactive.github.io/diy/pi-kiosk/
+).
+The current settings can be found in the `startup.sh` script.
+It's also fiddly to get the browser to display on two screens,
+e.g. the display is always set to 0, wwith the indow position giving the
+offset from one screen to the second.
 
 
 
 setup rpi screens (via gui display configuration or cli):
 
 
-$ tvservice -l
-2 attached device(s), display ID's are :
-Display Number 2, type HDMI 0
-Display Number 7, type HDMI 1
+    $ tvservice -l
+    2 attached device(s), display ID's are :
+    Display Number 2, type HDMI 0
+    Display Number 7, type HDMI 1
 
-$ tvservice -s -v 2
-state 0x6 [DVI CUSTOM RGB full 4:3], 1024x768 @ 75.00Hz, progressive
+    $ tvservice -s -v 2
+    state 0x6 [DVI CUSTOM RGB full 4:3], 1024x768 @ 75.00Hz, progressive
 
-$ tvservice -m DMT -v 2
-Group DMT has 6 modes:
-           mode 4: 640x480 @ 60Hz 4:3, clock:25MHz progressive
-           mode 6: 640x480 @ 75Hz 4:3, clock:31MHz progressive
-           mode 9: 800x600 @ 60Hz 4:3, clock:40MHz progressive
-           mode 11: 800x600 @ 75Hz 4:3, clock:49MHz progressive
-  (prefer) mode 16: 1024x768 @ 60Hz 4:3, clock:65MHz progressive
-           mode 18: 1024x768 @ 75Hz 4:3, clock:78MHz progressive
+    $ tvservice -m DMT -v 2
+    Group DMT has 6 modes:
+               mode 4: 640x480 @ 60Hz 4:3, clock:25MHz progressive
+               mode 6: 640x480 @ 75Hz 4:3, clock:31MHz progressive
+               mode 9: 800x600 @ 60Hz 4:3, clock:40MHz progressive
+               mode 11: 800x600 @ 75Hz 4:3, clock:49MHz progressive
+      (prefer) mode 16: 1024x768 @ 60Hz 4:3, clock:65MHz progressive
+               mode 18: 1024x768 @ 75Hz 4:3, clock:78MHz progressive
 
-$ tvservice -s -v 7
-state 0xa [HDMI CUSTOM RGB full 4:3], 1024x768 @ 75.00Hz, progressive
+    $ tvservice -s -v 7
+    state 0xa [HDMI CUSTOM RGB full 4:3], 1024x768 @ 75.00Hz, progressive
 
-$ tvservice -m DMT -v 7
-Group DMT has 11 modes:
-           mode 4: 640x480 @ 60Hz 4:3, clock:25MHz progressive
-           mode 5: 640x480 @ 72Hz 4:3, clock:31MHz progressive
-           mode 6: 640x480 @ 75Hz 4:3, clock:31MHz progressive
-           mode 8: 800x600 @ 56Hz 4:3, clock:36MHz progressive
-           mode 9: 800x600 @ 60Hz 4:3, clock:40MHz progressive
-           mode 10: 800x600 @ 72Hz 4:3, clock:50MHz progressive
-           mode 11: 800x600 @ 75Hz 4:3, clock:49MHz progressive
-           mode 16: 1024x768 @ 60Hz 4:3, clock:65MHz progressive
-           mode 17: 1024x768 @ 70Hz 4:3, clock:75MHz progressive
-           mode 18: 1024x768 @ 75Hz 4:3, clock:78MHz progressive
-           mode 85: 1280x720 @ 60Hz 16:9, clock:74MHz progressive
-
-
-g3py> uvicorn metrics:app --reload --host 0.0.0.0
-
-rpi4> DISPLAY=:0 chromium-browser --new-window --window-position=0,0 --kiosk --app=http://192.168.2.136:8000/panels/dhc2-nav.html
-
-DISPLAY=:0 chromium-browser --kiosk --app=http://192.168.2.136:8000/panels/dhc2-nav.html
-
-rpi4> DISPLAY=:0 chromium-browser --new-window --window-position=1024,0 --kiosk --app=http://192.168.2.136:8000/panels/dhc2-center.html
-
-
-
-
---user-data-dir="/home/pi/Documents/Profiles/0"
-
-
-
-
-
-
-
-
+    $ tvservice -m DMT -v 7
+    Group DMT has 11 modes:
+               mode 4: 640x480 @ 60Hz 4:3, clock:25MHz progressive
+               mode 5: 640x480 @ 72Hz 4:3, clock:31MHz progressive
+               mode 6: 640x480 @ 75Hz 4:3, clock:31MHz progressive
+               mode 8: 800x600 @ 56Hz 4:3, clock:36MHz progressive
+               mode 9: 800x600 @ 60Hz 4:3, clock:40MHz progressive
+               mode 10: 800x600 @ 72Hz 4:3, clock:50MHz progressive
+               mode 11: 800x600 @ 75Hz 4:3, clock:49MHz progressive
+               mode 16: 1024x768 @ 60Hz 4:3, clock:65MHz progressive
+               mode 17: 1024x768 @ 70Hz 4:3, clock:75MHz progressive
+               mode 18: 1024x768 @ 75Hz 4:3, clock:78MHz progressive
+               mode 85: 1280x720 @ 60Hz 16:9, clock:74MHz progressive
 
 
 
