@@ -43,7 +43,7 @@ class Arduino(serial.Serial):
         if not state:
             return
         latest = self._out_state.latest()
-        self._out_state.update()
+        self._out_state.update(state)
         if self._out_state.latest() == latest:
             return
 

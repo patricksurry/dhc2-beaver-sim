@@ -5,9 +5,15 @@ xset s off     # disable screen saver
 xset s noblank # don't blank the video device
 unclutter &    # hide X mouse cursor unless mouse activated
 
+source /home/pi/miniconda3/bin/activate beaver-sim
+
 G3PY_HOST=http://simba.local:8000
 
-source /home/pi/miniconda3/bin/activate beaver-sim
+printf "Waiting for host $G3PY_HOST ..."
+until $(curl --output /dev/null --silent --fail $G3PY_HOST); do
+    printf '.'
+    sleep 5
+done
 
 # begin monitoring arduino
 cd /home/pi/dhc2-beaver-sim

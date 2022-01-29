@@ -88,7 +88,6 @@ class InputList(InputBits):
     def from_bytes(self, xs: bytes, debug=False) -> List[InputValue]:
         # reverse bytes so we read() from msb to lsb
         bits = ConstBitStream(bytes(reversed(xs)))
-        print("from_bytes", len(xs), xs)
         assert len(bits) == self.nbits, f"Mismatched length from_bytes {len(bits)} != {self.nbits}"
         if debug:
             s = bits.bin
