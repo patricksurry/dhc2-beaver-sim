@@ -134,8 +134,8 @@ inputMap = InputList(list(reversed([
     InputEncoderWithButton('VOR'),  # VHF omnidirectional range - bottom right
     InputEncoderWithButton('ADF'),  # auto direction finder - top right
     InputEncoderWithButton('ALT'),  # altimeter - top 2nd from right
-    InputEncoderWithButton('AI'),   # attitude indicator - top 2nd from left
-    InputEncoderWithButton('HI'),   # heading indicator - bottom 2nd from left
+    InputEncoderWithButton('ATT'),   # attitude indicator - top 2nd from left
+    InputEncoderWithButton('HDG'),   # heading indicator - bottom 2nd from left
     InputBits('WOBBLE', 'uint:10'),  # potentiometer for wobble pump handle
     InputBits('MIXTURE', 'uint:10'),  # potentiometer for carb mixture
     InputUnused(14 * 10),
