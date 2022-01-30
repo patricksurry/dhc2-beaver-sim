@@ -154,12 +154,12 @@ inputComparators = {
 
 # 8-bit 12V LED controller via SPIO
 outputMap = [
-    'FUEL_WARNING',     #TODO map from simulator
-    'OIL_WARNING',
+    'RED_WARNING',
+    'ORANGE_WARNING',
     None,
     None,
-    'SW3-1',  # Front cabin
-    'SW3-2',  # Rear cabin
+    'FRONT_CABIN_LIGHTS',
+    'REAR_CABIN_LIGHTS',
     None,
     None
 ]
