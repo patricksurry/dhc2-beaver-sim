@@ -22,13 +22,25 @@ host = sys.argv[1] if len(sys.argv) == 2 else None
 latest = 0
 
 panel = Arduino()
-# panel = ArduinoMock()
 
 # test all the lights then leave them off
 print('Testing outputs...')
 panel.set_test(True)
 time.sleep(1)
 panel.set_test(False)
+
+if host:
+    available = False
+    print(f"Wating for host {host}")
+    while not available:
+        try:
+            response = requests.get(host)
+            available = response.status_code == 200
+        except Exception:
+            pass
+        print('.')
+        time.sleep(5)
+
 print('Monitoring panel...')
 
 query_params = dict(metrics=','.join(panel.output_names()), latest=0)
