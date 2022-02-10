@@ -126,7 +126,7 @@ inputMap = InputList(list(reversed([
     InputBool('SW3-1'),
     InputBool('SW3-2'),
     InputBool('SW3-3'),
-    InputBits('MAGNETO', 'uint:2'),
+    InputBits('FUELSELECTOR', 'uint:2'),
     InputNPosition('KEY', 6),
     InputBool('PRIMER'),
     InputUnused(9),
