@@ -1,6 +1,6 @@
 from switchmap import inputMap, inputComparators, outputMap, outputValue
 from changedict import ChangeDict
-from bitstring import BitStream
+from bitstring import BitStream  # type: ignore
 from random import random
 
 

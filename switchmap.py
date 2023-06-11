@@ -4,7 +4,7 @@ received from the Arduino to the actual physical inputs that
 we want to send to FS
 """
 from typing import List, Tuple, Dict, Any, Optional
-from bitstring import ConstBitStream
+from bitstring import ConstBitStream  # type: ignore
 
 
 InputValue = Tuple[str, Any]

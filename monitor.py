@@ -1,6 +1,6 @@
 """
 Simple serial monitor that pings the Arduino to check current input state.
-Currenly prints state changes, but soon will send via python-simconnect
+Currently prints state changes, but soon will send via python-simconnect
 
 To run:
 
@@ -11,9 +11,9 @@ To run:
 """
 import sys
 import time
-import requests
-from arduino import Arduino
-# from arduino_mock import ArduinoMock as Arduino
+import requests # type: ignore
+# from arduino import Arduino
+from arduino_mock import ArduinoMock as Arduino
 
 assert len(sys.argv) <= 2
 
@@ -31,7 +31,7 @@ panel.set_test(False)
 
 if host:
     available = False
-    print(f"Wating for host {host}")
+    print(f"Waiting for host {host}")
     while not available:
         try:
             response = requests.get(host)

@@ -1,5 +1,5 @@
-import serial
-from serial.tools.list_ports import comports
+import serial   # type: ignore
+from serial.tools.list_ports import comports  # type: ignore
 
 from switchmap import inputMap, inputComparators, outputMap, outputValue
 from changedict import ChangeDict
@@ -13,7 +13,7 @@ print(f"Arduino: reading {_in_bytes} bytes, writing {_out_bytes}")
 class Arduino(serial.Serial):
     def __init__(self):
         # scan attached serial devices for the first one with a USB vendor Id
-        # to locate the Arduino.  This could fail with multiple USD devices
+        # to locate the Arduino.  This could fail with multiple USB devices
         self._in_state = ChangeDict(comparators=inputComparators)
         self._out_state = ChangeDict()
         usbport = next((p.device for p in comports() if p.vid), None)

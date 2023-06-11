@@ -5,8 +5,8 @@ cockpit in the basement.
 
 This repo contains the software used for the integration, with miscellaneous other notes.
 
-The panel instruments are displayed with [AirPlayer](https://siminnovations.com/)
-running on a Raspberry Pi 3.  The Pi also monitors various physical inputs
+The panel instruments are displayed with [g3py]hhttps://github.com/patricksurry/g3py)
+running on a Raspberry Pi 4.  The Pi also monitors various physical inputs
 via an Arduino Mega connected by USB.
 
 The Arduino Mega runs the sketch in `controlpanel/controlpanel.ino`
@@ -23,23 +23,37 @@ The logical mapping of switches from the Arduino pins is configured in `switchma
 and `serialmonitor.py` runs a very simple polling routine which checks for state changes
 on a regular basis.
 
+
+Raspberry Pi setup
+---
+
+- Use the [Raspberry Pi Imager](https://www.raspberrypi.com/software/) to install Debian 11 (bullseye) 64 bit version
+
+- Check for any recent updates via:
+
+    sudo apt update
+    sudo apt upgrade
+
+- Install conda miniforge from https://github.com/conda-forge/miniforge
+
+    wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh
+    bash Miniforge3-Linux-aarch64.sh
+
+- Clone the repo:
+
+    git clone https://github.com/patricksurry/dhc2-beaver-sim.git
+    cd dhc2-beaver-sim
+    conda env update -f environment.yml
+    conda activate beaver-sim
+
+
+
+
+
 TODO: this will also forward the input actions to FS2020 via python-simconnect.
 
 
 
-
-Install miniconda on the PI, e.g. [this question](https://stackoverflow.com/questions/39371772/how-to-install-anaconda-on-raspberry-pi-3-model-b)
-
-    wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-armv7l.sh
-    md5sum Miniconda3-latest-Linux-armv7l.sh
-    /bin/bash Miniconda3-latest-Linux-armv7l.sh
-    rm Miniconda3-latest-Linux-armv7l.sh
-
-Set up the conda environment for the serial monitor:
-
-    conda config --add channels rpi
-
-    conda env update -f environment.yml
 
 
 Tool to disable mouse pointer unless moving
@@ -73,8 +87,15 @@ offset from one screen to the second.
 
 
 
-setup rpi screens (via gui display configuration or cli):
+setup rpi screens resolution and orientation (via gui display configuration or cli):
 
+in my case I want orientation > left
+
+
+
+click top-left > preferences > screen configuration
+
+or via sudo raspi-config # advanced options > resolution > ...
 
     $ tvservice -l
     2 attached device(s), display ID's are :
