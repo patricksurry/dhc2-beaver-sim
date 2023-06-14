@@ -64,10 +64,15 @@ Wait for the network before launching startup script:
 
     sudo raspi-config # System -> Network -> Wait for network at boot
 
-Create `~/.config/lxsession/LXDE-pi/autostart` to start the browser and
+Create `/etc/xdg/lxsession/LXDE-pi/autostart`
+(or `~/.config/lxsession/LXDE-pi/autostart`;
+see https://forums.raspberrypi.com/viewtopic.php?t=294014)
+to start the browser and
 arduino monitoring at startup, it should contain just:
 
-    /home/pi/dhc2-beaver-sim/startup.sh
+    @lxpanel --profile LXDE-pi
+    @pcmanfm --desktop --profile LXDE-pi
+    @bash /home/pi/dhc2-beaver-sim/startup.sh
 
 On restart, logs will be found in:
 

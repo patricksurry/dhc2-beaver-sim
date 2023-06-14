@@ -1,14 +1,14 @@
 name: beaver-sim
 dependencies:
   - pip
-  - python=3.6
+  - python=3.7
   - pip:
-    - fastapi
     - uvicorn
-    - aiofiles
     - requests
     - pyserial
     - bitstring
+    - aiohttp
+    - aiohttp-sse-client
     - flake8
     - flake8-black
     - mypy

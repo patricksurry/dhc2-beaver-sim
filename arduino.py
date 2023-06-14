@@ -32,6 +32,11 @@ class Arduino(serial.Serial):
         self._in_state.update(state)
         return self._in_state
 
+    def get_state_changes(self):
+        t = self._in_state.latest()
+        self.get_state()
+        return self._in_state.changedsince(t)
+
     def output_names(self):
         return [k for k in outputMap if k]
 
