@@ -1,12 +1,11 @@
 """
-Simple serial monitor that pings the Arduino to check current input state.
-Currently prints state changes, but soon will send via python-simconnect
+Simple serial monitor that proxies Arduino I/O state to g3py server
 
 To run:
 
     conda env update -f environment.yml
     conda activate beaver-sim
-    python serialmonitor.py
+    python monitor.py --help
 
 """
 import logging
@@ -15,7 +14,6 @@ import aiohttp
 from aiohttp_sse_client import client as sse_client
 from aiohttp.client_exceptions import ClientPayloadError
 
-import sys
 import json
 import argparse
 
@@ -47,7 +45,7 @@ async def watch_metrics(hosturl: str=None):
                     logging.debug(f"watch_metrics: SSE data {event.data}")
                     result = json.loads(event.data)
                     params['latest'] = result['latest']
-                    print('SSE event', event.data)
+                    logging.debug('SSE event', event.data)
                     if result.get('metrics'):
                         panel.set_state(result['metrics'])
             except (ConnectionError, ClientPayloadError):

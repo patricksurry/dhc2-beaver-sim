@@ -1,5 +1,6 @@
 import serial   # type: ignore
 from serial.tools.list_ports import comports  # type: ignore
+import logging
 
 from switchmap import inputMap, inputComparators, outputMap, outputValue
 from changedict import ChangeDict
@@ -7,8 +8,7 @@ from changedict import ChangeDict
 _in_bytes = (inputMap.nbits + 7) // 8
 _out_bytes = (len(outputMap) + 7) // 8
 
-print(f"Arduino: reading {_in_bytes} bytes, writing {_out_bytes}")
-
+logging.debug(f"Arduino: mapped with {_in_bytes} bytes input, {_out_bytes} bytes output")
 
 class Arduino(serial.Serial):
     def __init__(self):
@@ -18,15 +18,16 @@ class Arduino(serial.Serial):
         self._out_state = ChangeDict()
         usbport = next((p.device for p in comports() if p.vid), None)
         assert usbport, "Couldn't find usbport, is Arduino connected?"
-        print(f"Arduino on usb port @ {usbport}")
+        logging.info(f"Arduino: found on usb port @ {usbport}")
         super().__init__(port=usbport, baudrate=115200, timeout=1)
-        print(f"Initializing, expecting timeout...")
+        logging.debug("Arduino: Initializing, expecting timeout...")
         self.read(_in_bytes)
-        print(f"Ready.")
+        logging.info("Arduino: Ready.")
 
     def get_state(self):
         # send a "request state" command
         # then receive expected number of bytes
+        logging.debug("Arduino: reading current state")
         self.write(b'\x01')
         state = dict(inputMap.from_bytes(self.read(_in_bytes)))
         self._in_state.update(state)
@@ -53,5 +54,5 @@ class Arduino(serial.Serial):
             return
 
         v = outputValue(self._out_state)
-        print(f"Writing output state 0x{v:02x}")
+        logging.debug(f"Arduino: writing output state 0x{v:02x}")
         self.write(b'\x02' + v.to_bytes(_out_bytes, byteorder='little'))
