@@ -1,13 +1,15 @@
 """
-Defines the `switchmap` which configures how we map the raw data
+Defines the switch map which configures how we map the raw data
 received from the Arduino to the actual physical inputs that
 we want to send to FS
 """
-from typing import List, Tuple, Dict, Any, Optional
-from bitstring import ConstBitStream  # type: ignore
+from typing import cast, List, Tuple
+from bitstring import ConstBitStream, Bits # type: ignore
+
+from g3py.decl import Metric, MetricValue, MetricDict
 
 
-InputValue = Tuple[str, Any]
+InputValue = Tuple[Metric, MetricValue]
 
 
 class InputBits:
@@ -16,7 +18,7 @@ class InputBits:
     a list of one or more named valued.
     Every subclass specifies the number of bits it consumes via `nbits`
     """
-    def __init__(self, name: str = '', fmt: str = None):
+    def __init__(self, name: Metric, fmt: str):
         """By default provide a name and a bitstring format string"""
         self.name = name
         self.fmt = fmt
@@ -51,7 +53,7 @@ class InputNPosition(InputBits):
         super().__init__(name, f'bits:{n}')
 
     def read(self, bits: ConstBitStream) -> List[InputValue]:
-        bs = bits.read(self.fmt)
+        bs = cast(Bits, bits.read(self.fmt))
         # Find the index of the first (or last) set bit,
         # returned as a 0-indexed tuple, where 0 indicates MSB
         # and N-1 indicates MSB, so we return N-v
@@ -79,7 +81,7 @@ class InputList(InputBits):
     def __init__(self, inputs: List[InputBits]):
         self.inputs = inputs
         nbits = sum(d.nbits for d in inputs)
-        super().__init__(fmt=f':{nbits}')
+        super().__init__('list', fmt=f':{nbits}')
 
     def read(self, bits: ConstBitStream) -> List[InputValue]:
         """note bits should be MSB first throughout"""
@@ -137,18 +139,18 @@ inputMap = InputList(list(reversed([
     InputEncoderWithButton('ATT'),   # attitude indicator - top 2nd from left
     InputEncoderWithButton('HDG'),   # heading indicator - bottom 2nd from left
     InputBits('WOBBLE', 'uint:10'),  # potentiometer for wobble pump handle
-    InputBits('MIXTURE', 'uint:10'),  # potentiometer for carb mixture
+    InputBits('MIXTURE', 'uint:10'),  # potentiometer for carburetor mixture
     InputUnused(14 * 10),
 ])))
 
 
-def lofi(delta=8):
+def lo_fidelity(delta=8):
     return lambda a, b: abs(a-b) < delta
 
 
 inputComparators = {
-    'WOBBLE': lofi(),
-    'MIXTURE': lofi(),
+    'WOBBLE': lo_fidelity(),
+    'MIXTURE': lo_fidelity(),
 }
 
 
@@ -165,9 +167,9 @@ outputMap = [
 ]
 
 
-def outputValue(state: Dict[Optional[str], Any]) -> int:
+def outputValue(state: MetricDict) -> int:
     return sum(
-        1 << i for i, k in enumerate(outputMap) if state.get(k)
+        1 << i for i, k in enumerate(outputMap) if k is not None and state.get(k)
     )
 
 
@@ -175,7 +177,7 @@ if __name__ == '__main__':
     """Simple test that we can read state from bytes similar to Arduino output"""
     import json
 
-    print(f'Switchmap has {inputMap.nbits} bits')
+    print(f'Switch map has {inputMap.nbits} bits')
     xs = bytes.fromhex('fbbf0173007f8300003ff3f0' + '00'*17)
     state = dict(inputMap.from_bytes(xs, debug=True))
     print(json.dumps(state, indent=4))

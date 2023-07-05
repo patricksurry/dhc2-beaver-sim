@@ -10,51 +10,47 @@ To run:
 """
 import logging
 import asyncio
-import aiohttp
-from aiohttp_sse_client import client as sse_client
-from aiohttp.client_exceptions import ClientPayloadError
+from typing import Optional
 
-import json
 import argparse
 
+from g3py.metrics import MetricsProducer, MetricsConsumer, MetricsModel
 
-async def watch_panel(panel, hosturl: str=None):
+
+async def watch_panel(panel, hub_url: Optional[str] = None, interval: float=0.1):
     logging.info('watch_paneL: starting')
 
-    async with aiohttp.ClientSession() as session:
-        while True:
-            diff = panel.get_state_changes()
-            if diff:
-                logging.debug("watch_panel: outputs changed", diff)
-                if hosturl:
-                    #TODO try/except
-                    await session.post(f"{hosturl}/inputs", json=diff)
-            await asyncio.sleep(0.1)
+    if hub_url:
+        logging.debug("watch_paneL: starting metrics producer")
+        producer = MetricsProducer(panel.__class__.__name__, hub_url)
+    else:
+        producer = None
+
+    while True:
+        diff = panel.get_state_changes()
+        if diff:
+            logging.debug(f"watch_panel: state changed {diff}", )
+            if producer:
+                await producer.update_async(MetricsModel(metrics=diff))
+            else:
+                print("Panel changes:", diff)
+        await asyncio.sleep(interval)
 
 
-async def watch_metrics(panel, hosturl: str=None):
-    if not hosturl:
+async def watch_metrics(panel, hub_url: Optional[str]=None):
+    if not hub_url:
         return
 
-    metrics = ','.join(panel.output_names())
+    metrics = panel.output_names()
 
     logging.info(f"watch_metrics: starting SSE consumer for {metrics}")
 
-    params = dict(metrics=metrics, latest=0)
+    def handler(mm: MetricsModel):
+        logging.debug(f"watch_metrics: updating panel: {mm.dict()}")
+        panel.set_state(mm.metrics)
 
-    while True:
-        async with sse_client.EventSource(f"{hosturl}/stream", params) as events:
-            try:
-                async for event in events:
-                    logging.debug(f"watch_metrics: SSE data {event.data}")
-                    result = json.loads(event.data)
-                    params['latest'] = result['latest']
-                    logging.debug("watch_metrics: got SSE event data {event.data}")
-                    if result.get('metrics'):
-                        panel.set_state(result['metrics'])
-            except (ConnectionError, ClientPayloadError):
-                pass
-        logging.debug(f"watch_metrics: consumer restarting")
+    consumer = MetricsConsumer(panel.__class__.__name__, hub_url)
+    await consumer.watch(metrics, handler)
 
 
 async def main():
@@ -64,13 +60,14 @@ async def main():
         add_help=False,
     )
     parser.add_argument('-?', '--help', action='help')
-    parser.add_argument('-h', '--hostname', help='metric server root URL')
+    parser.add_argument('-h', '--hub-url', help='metrics hub root URL')
     parser.add_argument('-m', '--mock', action='store_true', help='mock arduino panel')
+    parser.add_argument('-i', '--interval', default=0.1, type=float, help='polling interval')
     parser.add_argument('-l', '--loglevel', default='INFO', help='set log level (default INFO)',
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
+        choices=['debug', 'info', 'warning', 'error', 'critical'])
     args = parser.parse_args()
 
-    logging.basicConfig(level=args.loglevel)
+    logging.basicConfig(level=args.loglevel.upper())
 
     if args.mock:
         from arduino_mock import ArduinoMock as Arduino
@@ -87,7 +84,10 @@ async def main():
     panel.set_test(False)
 
     logging.info("main: start monitors")
-    await asyncio.gather(watch_panel(panel, args.hostname), watch_metrics(panel, args.hostname))
+    await asyncio.gather(
+        watch_panel(panel, args.hub_url, args.interval),
+        watch_metrics(panel, args.hub_url)
+    )
 
 
 asyncio.run(main())
